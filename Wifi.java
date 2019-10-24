@@ -1,13 +1,21 @@
 #include <SoftwareSerial.h>
+SoftwareSerial SerialESP8266(10,11);
+int temp,humedad,co2,humidity_ground;
+int lectura; //lectura analógica (0 - 1023)
+int lecturaEnPPM; //lectura en ppm (20 ppm - 2000 ppm
+int lecturaHumedad;
+
+String cadena="";
+String server = "http://apiucc.herokuapp.com";
 void setup() {
   // put your setup code here, to run once:
-SoftwareSerial SerialESP8266(10,11);
+
 iniciarWifi();
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
- 
+ enviarPeticion();
 }
 
 
@@ -32,7 +40,7 @@ void iniciarWifi(){
     Serial.println("ESP8266 en modo Estacion");
 
 //Nos conectamos a una red wifi
-  SerialESP8266.println("AT+CWJAP=\"Materialize\",\"Mateo28:19\"");
+  SerialESP8266.println("AT+CWJAP=\"Movistar_88759737\",\"00936167482\"");
   Serial.println("Conectandose a la red ...");
 SerialESP8266.setTimeout(10000); //Aumentar si demora la conexion
 if(SerialESP8266.find("OK"))
@@ -52,11 +60,11 @@ delay(1000);
 } 
 void enviarPeticion(){
 
-  lectura = analogRead(sensor); //leemos del sensor MQ7S valores entre 0 1023
-  lecturaHumedad = map(analogRead(sensorHumedad), 1023, 0, 0, 100);
-  lecturaEnPPM = map(lectura, 0, 1023, 20, 1023);//Convertimos el rango de lectura analógica (0-1023) al rango de lectura en ppm (20 ppm - 2000 pmm) que soporta MQ7 
-  humedad = dht.readHumidity();
-  temp =dht.readTemperature();
+  lectura = 12; //leemos del sensor MQ7S valores entre 0 1023
+  lecturaHumedad = 13;
+  lecturaEnPPM = 212;//Convertimos el rango de lectura analógica (0-1023) al rango de lectura en ppm (20 ppm - 2000 pmm) que soporta MQ7 
+  humedad = 26;
+  temp = 27;
 
  //---------enviamos las variables al servidor---------------------
   SerialESP8266.println("AT+CIPSTART=\"TCP\",\"" + server + "\",80");
@@ -65,8 +73,8 @@ void enviarPeticion(){
   {  
     Serial.println("ESP8266 conectado con el servidor...");            
  //Armamos el encabezado de la peticion http://apiarduino.herokuapp.com/api/rec?temp=28&humidity=32&co2=32&humididy_ground=
-    String peticionHTTP= "POST/api/rec?temp="+String(temp)+"&humidity="+String(humedad)+"&co2="+String(lecturaEnPPM)+" HTTP/1.1\r\n";
-    peticionHTTP=peticionHTTP+"Host: apiarduino.herokuapp.com\r\n\r\n"; 
+    String peticionHTTP= "GET /api/rec?co2="+String(humedad)+"&luz="+String(humedad)+"&humedad="+String(humedad)+"&humedad_suelo="+String(humedad)+"&temperatura="+String(humedad)+"&lluvia="+String(humedad)+"&pre_atmosferica="+String(humedad)+" HTTP/1.1\r\n";
+    peticionHTTP=peticionHTTP+"Host: apiucc.herokuapp.com\r\n\r\n"; 
     Serial.println(peticionHTTP);
 
 
@@ -107,7 +115,7 @@ void enviarPeticion(){
                       Serial.println("Conexion finalizada");
                     fin_respuesta=true;
                    }
-                  if((millis()-tiempo_inicio)>10000) //Finalizamos si ya han transcurrido 10 seg
+                  if((millis()-tiempo_inicio)>20000) //Finalizamos si ya han transcurrido 10 seg
                   {
                     Serial.println("Tiempo de espera agotado");
                     SerialESP8266.println("AT+CIPCLOSE");
